@@ -4,7 +4,7 @@ Este projeto implementa a paralelização da função multi_partition utilizando
 
 O projeto também realiza medições de desempenho em diferentes números de threads e analisa os resultados, considerando efeitos de cache, para garantir medidas confiáveis.
 Funcionalidades
-    - Implementação paralela com pool de threads.
-    - Geração de gráficos e planilhas para análise de desempenho.
-    - Scripts para execução no cluster w00 (xeon) com Slurm.
-    - Verificação automática do particionamento com a função verifica_particoes.
+    <li> Implementação paralela com pool de threads.
+    <li> Geração de gráficos e planilhas para análise de desempenho.
+    <li> Scripts para execução no cluster w00 (xeon) com Slurm.
+    <li> Verificação automática do particionamento com a função verifica_particoes.
