@@ -8,3 +8,7 @@ Funcionalidades
     <li> Geração de gráficos e planilhas para análise de desempenho.
     <li> Scripts para execução no cluster w00 (xeon) com Slurm.
     <li> Verificação automática do particionamento com a função verifica_particoes.
+
+
+## Todos
+- [ ] C

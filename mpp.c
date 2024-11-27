@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <pthread.h>
+#include <time.h>
 
 #define MAX_THREADS 4
 
@@ -26,9 +27,9 @@
 // }
 
 long long geraAleatorioLL() {
-    int a = rand();  // Returns a pseudo-random integer
+    int a = rand() % 10;  // Returns a pseudo-random integer
                      //    between 0 and RAND_MAX.
-    int b = rand();  // same as above
+    int b = rand() % 10;  // same as above
     long long v = (long long)a * 100 + b;
     return v;
 }
@@ -119,7 +120,20 @@ void multi_partition(long long *Input, int n, long long *P, int np, long long *O
     }
 }
 
+long long *geraVetor(long long n) {
+    long long *vetor = malloc(sizeof(long long)*n);
+    if(!vetor)
+        return NULL;
+    
+    for(int i=0; i<n; i++) {
+        vetor[i] = geraAleatorioLL();
+    }
+
+    return vetor;
+}
+
 int main () {
+    srand(time(NULL));
     long long Input[100] = {8, 4, 13, 7, 11, 100, 44, 3, 7, 7, 100, 110, 46, 44};
     int n = 14;   // n == numero de elementos em Input e em Output
     long long P[20] = {12, 70, 90, LLONG_MAX};   // OBS: incluir <limits.h> que tem LLONG_MAX
@@ -127,9 +141,16 @@ int main () {
     long long Output[100];
     int Pos[20];
 
-    multi_partition(Input, n, P, np, Output, Pos);
+    long long n2 = 14;
+    long long *Input2 = geraVetor(n2);
+    long long *P2 = geraVetor(4);
+    long long *Output2 = geraVetor(n2);
 
-    printOutput(Output, n);
+    multi_partition(Input2, n2, P2, np, Output2, Pos);
+
+    printOutput(Input2, n2);
+    printOutput(P2, np);
+    printOutput(Output2, n2);
     printPos(Pos, np);
     return 0;
 }
