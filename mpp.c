@@ -27,36 +27,29 @@
 // }
 
 long long geraAleatorioLL() {
-    int a = rand() % 10;  // Returns a pseudo-random integer
+    long long a = rand() % 10;  // Returns a pseudo-random integer
                      //    between 0 and RAND_MAX.
-    int b = rand() % 10;  // same as above
+    long long b = rand() % 10;  // same as above
     long long v = (long long)a * 100 + b;
     return v;
 }
 
-void printOutput(long long *Output, int n) {
-    for(int i=0; i<n; i++) {
+void printVetor(long long *Output, long long n) {
+    for(long long i=0; i<n; i++) {
         printf("%lld ", Output[i]);
-    }
-    printf("\n");
-}
-
-void printPos(int *Pos, int np) {
-    for(int i=0; i<np; i++) {
-        printf("%d ", Pos[i]);
     }
     printf("\n");
 }
 
 typedef struct {
     long long *Input;
-    int n;
+    long long n;
     long long *P;
-    int np;
+    long long np;
     long long *Output;
-    int *Pos;
-    int start;
-    int end;
+    long long *Pos;
+    long long start;
+    long long end;
 } PartitionArgs;
 
 pthread_mutex_t mutexCount = PTHREAD_MUTEX_INITIALIZER;
@@ -66,7 +59,7 @@ long long count = 0;
 void *partition_thread(void *args) {
     PartitionArgs *data = (PartitionArgs *)args;
 
-    for (int j = data->start; j < data->end; j++) {
+    for (long long j = data->start; j < data->end; j++) {
         long long pMin = (j == 0) ? 0 : data->P[j - 1];
         long long pMax = data->P[j];
 
@@ -74,7 +67,7 @@ void *partition_thread(void *args) {
         data->Pos[j] = count;
         pthread_mutex_unlock(&mutexPos);
 
-        for (int i = 0; i < data->n; i++) {
+        for (long long i = 0; i < data->n; i++) {
             if (data->Input[i] >= pMin && data->Input[i] < pMax) {
                 pthread_mutex_lock(&mutexCount);
                 data->Output[count] = data->Input[i];
@@ -87,18 +80,18 @@ void *partition_thread(void *args) {
     return NULL;
 }
 
-void multi_partition(long long *Input, int n, long long *P, int np, long long *Output, int *Pos) {
+void multi_partition(long long *Input, long long n, long long *P, long long np, long long *Output, long long *Pos) {
     pthread_t threads[MAX_THREADS];
     PartitionArgs threadData[MAX_THREADS];
 
-    int partitionsPerThread = np / MAX_THREADS;
-    int remainder = np % MAX_THREADS;
+    long long partitionsPerThread = np / MAX_THREADS;
+    long long remainder = np % MAX_THREADS;
 
-    int currentPartition = 0;
+    long long currentPartition = 0;
 
-    for (int t = 0; t < MAX_THREADS; t++) {
-        int start = currentPartition;
-        int end = start + partitionsPerThread + (t < remainder ? 1 : 0);
+    for (long long t = 0; t < MAX_THREADS; t++) {
+        long long start = currentPartition;
+        long long end = start + partitionsPerThread + (t < remainder ? 1 : 0);
 
         threadData[t] = (PartitionArgs){
             .Input = Input,
@@ -115,42 +108,50 @@ void multi_partition(long long *Input, int n, long long *P, int np, long long *O
         currentPartition = end;
     }
 
-    for (int t = 0; t < MAX_THREADS; t++) {
+    for (long long t = 0; t < MAX_THREADS; t++) {
         pthread_join(threads[t], NULL);
     }
 }
 
-long long *geraVetor(long long n) {
-    long long *vetor = malloc(sizeof(long long)*n);
-    if(!vetor)
+int compara(const void *a, const void *b) {
+    long long valA = *(const long long *)a;
+    long long valB = *(const long long *)b;
+    if (valA < valB) return -1;
+    if (valA > valB) return 1;
+    return 0;
+}
+
+// Função para gerar o vetor
+long long *geraVetor(long long n, int ordena) {
+    long long *vetor = malloc(sizeof(long long) * n);
+    if (!vetor)
         return NULL;
     
-    for(int i=0; i<n; i++) {
-        vetor[i] = geraAleatorioLL();
+    for (long long i = 0; i < n; i++) {
+        vetor[i] = geraAleatorioLL(); // Supondo que essa função existe
     }
-
+    
+    if (ordena) {
+        qsort(vetor, n, sizeof(long long), compara);
+    }
+    
     return vetor;
 }
 
 int main () {
     srand(time(NULL));
-    long long Input[100] = {8, 4, 13, 7, 11, 100, 44, 3, 7, 7, 100, 110, 46, 44};
-    int n = 14;   // n == numero de elementos em Input e em Output
-    long long P[20] = {12, 70, 90, LLONG_MAX};   // OBS: incluir <limits.h> que tem LLONG_MAX
-    int np = 4;   // np == numero de faixas no vetor P
-    long long Output[100];
-    int Pos[20];
+    long long n = 8000000;
+    long long np = 1000;
+    long long *Input = geraVetor(n, 0);
+    long long *P = geraVetor(np, 1);
+    long long *Output = geraVetor(n, 0);
+    long long *Pos = geraVetor(np, 0);
+    
+    multi_partition(Input, n, P, np, Output, Pos);
 
-    long long n2 = 14;
-    long long *Input2 = geraVetor(n2);
-    long long *P2 = geraVetor(4);
-    long long *Output2 = geraVetor(n2);
-
-    multi_partition(Input2, n2, P2, np, Output2, Pos);
-
-    printOutput(Input2, n2);
-    printOutput(P2, np);
-    printOutput(Output2, n2);
-    printPos(Pos, np);
+    // printVetor(Input, n);
+    // printVetor(P, np);
+    // printVetor(Output, n);
+    // printVetor(Pos, np);
     return 0;
 }
