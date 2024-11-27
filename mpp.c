@@ -1,6 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <pthread.h>
+
+#define MAX_THREADS 4
+
+// int multi_partition(long long *Input, int n, long long *P, int np, long long *Output, int *Pos) {
+//     long long pMin, pMax = 0;
+//     long long count = 0;
+
+//     for(int j=0; j<np; j++) {
+//         Pos[j] = count;
+//         for(int i=0; i<n; i++) {
+//             if(j == 0)
+//                 pMin = 0;
+//             else
+//                 pMin = P[j-1];
+//             pMax = P[j];
+//             if(Input[i] < pMax && Input[i] >= pMin) {
+//                 Output[count] = Input[i];
+//                 count++;
+//             }
+//         }
+//     }
+// }
 
 long long geraAleatorioLL() {
     int a = rand();  // Returns a pseudo-random integer
@@ -12,7 +35,7 @@ long long geraAleatorioLL() {
 
 void printOutput(long long *Output, int n) {
     for(int i=0; i<n; i++) {
-        printf("%d ", Output[i]);
+        printf("%lld ", Output[i]);
     }
     printf("\n");
 }
@@ -24,22 +47,75 @@ void printPos(int *Pos, int np) {
     printf("\n");
 }
 
-int multi_partition(long long *Input, int n, long long *P, int np, long long *Output, int *Pos) {
-    long long pMin, pMax = 0;
-    long long count = 0;
-    for(int j=0; j<np; j++) {
-        Pos[j] = count;
-        for(int i=0; i<n; i++) {
-            if(j == 0)
-                pMin = 0;
-            else
-                pMin = P[j-1];
-            pMax = P[j];
-            if(Input[i] < pMax && Input[i] >= pMin) {
-                Output[count] = Input[i];
+typedef struct {
+    long long *Input;
+    int n;
+    long long *P;
+    int np;
+    long long *Output;
+    int *Pos;
+    int start;
+    int end;
+} PartitionArgs;
+
+pthread_mutex_t mutexCount = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutexPos = PTHREAD_MUTEX_INITIALIZER;
+long long count = 0;
+
+void *partition_thread(void *args) {
+    PartitionArgs *data = (PartitionArgs *)args;
+
+    for (int j = data->start; j < data->end; j++) {
+        long long pMin = (j == 0) ? 0 : data->P[j - 1];
+        long long pMax = data->P[j];
+
+        pthread_mutex_lock(&mutexPos);
+        data->Pos[j] = count;
+        pthread_mutex_unlock(&mutexPos);
+
+        for (int i = 0; i < data->n; i++) {
+            if (data->Input[i] >= pMin && data->Input[i] < pMax) {
+                pthread_mutex_lock(&mutexCount);
+                data->Output[count] = data->Input[i];
                 count++;
+                pthread_mutex_unlock(&mutexCount);
             }
         }
+    }
+
+    return NULL;
+}
+
+void multi_partition(long long *Input, int n, long long *P, int np, long long *Output, int *Pos) {
+    pthread_t threads[MAX_THREADS];
+    PartitionArgs threadData[MAX_THREADS];
+
+    int partitionsPerThread = np / MAX_THREADS;
+    int remainder = np % MAX_THREADS;
+
+    int currentPartition = 0;
+
+    for (int t = 0; t < MAX_THREADS; t++) {
+        int start = currentPartition;
+        int end = start + partitionsPerThread + (t < remainder ? 1 : 0);
+
+        threadData[t] = (PartitionArgs){
+            .Input = Input,
+            .n = n,
+            .P = P,
+            .np = np,
+            .Output = Output,
+            .Pos = Pos,
+            .start = start,
+            .end = end,
+        };
+
+        pthread_create(&threads[t], NULL, partition_thread, &threadData[t]);
+        currentPartition = end;
+    }
+
+    for (int t = 0; t < MAX_THREADS; t++) {
+        pthread_join(threads[t], NULL);
     }
 }
 
@@ -50,7 +126,9 @@ int main () {
     int np = 4;   // np == numero de faixas no vetor P
     long long Output[100];
     int Pos[20];
+
     multi_partition(Input, n, P, np, Output, Pos);
+
     printOutput(Output, n);
     printPos(Pos, np);
     return 0;
