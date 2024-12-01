@@ -5,41 +5,17 @@
 #include "multi_partition.h"
 
 pthread_mutex_t mutexPos = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutexCount = PTHREAD_MUTEX_INITIALIZER;
-long long count = 0;
-
-void multi_partition_simple(long long *Input, int n, long long *P, int np, long long *Output, int *Pos) {
-    long long pMin, pMax = 0;
-    long long count = 0;
-
-    for(int j=0; j<np; j++) {
-        Pos[j] = count;
-        pMin = (j==0) ? 0 : P[j-1];
-        pMax = P[j];
-        for(int i=0; i<n; i++) {
-            if(Input[i] >= pMin && Input[i] < pMax) {
-                Output[count] = Input[i];
-                count++;
-            }
-        }
-    }
-}
 
 void *partition_thread(void *args) {
     PartitionArgs *data = (PartitionArgs *)args;
 
-    // Alocar buffer local
-    long long *localBuffer = malloc(sizeof(long long) * data->n);
-    if (!localBuffer) {
-        perror("Erro ao alocar buffer local");
-        pthread_exit(NULL);
-    }
-
-    long long local_count = 0;
+    long long pMin, pMax;
+    long long start_index = data->Pos[data->start]; // Início da região que a thread deve preencher
+    long long offset = 0;
 
     for (long long j = data->start; j < data->end; j++) {
-        long long pMin = (j == 0) ? LLONG_MIN : data->P[j - 1];
-        long long pMax = data->P[j];
+        pMin = (j == 0) ? LLONG_MIN : data->P[j - 1];
+        pMax = data->P[j];
 
         // Ignorar partições inválidas
         if (pMin == pMax) {
@@ -48,22 +24,12 @@ void *partition_thread(void *args) {
 
         for (long long i = 0; i < data->n; i++) {
             if (data->Input[i] >= pMin && data->Input[i] < pMax) {
-                localBuffer[local_count++] = data->Input[i];
+                data->Output[start_index + offset] = data->Input[i];
+                offset++;
             }
         }
     }
 
-    // Atualizar `Output`
-    pthread_mutex_lock(&mutexCount);
-    long long start_index = *data->global_count;
-    *data->global_count += local_count;
-    pthread_mutex_unlock(&mutexCount);
-
-    for (long long i = 0; i < local_count; i++) {
-        data->Output[start_index + i] = localBuffer[i];
-    }
-
-    free(localBuffer);
     pthread_exit(NULL);
 }
 
@@ -71,10 +37,24 @@ void multi_partition(long long *Input, int n, long long *P, int np, long long *O
     pthread_t threads[MAX_THREADS];
     PartitionArgs threadData[MAX_THREADS];
 
-    long long global_count = 0;
     long long partitionsPerThread = np / MAX_THREADS;
     long long remainder = np % MAX_THREADS;
 
+    // Calcular o vetor Pos
+    long long count = 0;
+    for (int j = 0; j < np; j++) {
+        Pos[j] = count;
+        long long pMin = (j == 0) ? LLONG_MIN : P[j - 1];
+        long long pMax = P[j];
+
+        for (int i = 0; i < n; i++) {
+            if (Input[i] >= pMin && Input[i] < pMax) {
+                count++;
+            }
+        }
+    }
+
+    // Dividir trabalho entre as threads
     long long currentPartition = 0;
 
     for (int t = 0; t < MAX_THREADS; t++) {
@@ -87,15 +67,12 @@ void multi_partition(long long *Input, int n, long long *P, int np, long long *O
             .P = P,
             .np = np,
             .Output = Output,
+            .Pos = Pos,
             .start = start,
             .end = end,
-            .global_count = &global_count
         };
 
-        if (pthread_create(&threads[t], NULL, partition_thread, &threadData[t]) != 0) {
-            perror("Erro ao criar thread");
-            exit(EXIT_FAILURE);
-        }
+        pthread_create(&threads[t], NULL, partition_thread, &threadData[t]);
 
         currentPartition = end;
     }
@@ -104,15 +81,6 @@ void multi_partition(long long *Input, int n, long long *P, int np, long long *O
         if (pthread_join(threads[t], NULL) != 0) {
             perror("Erro ao aguardar thread");
             exit(EXIT_FAILURE);
-        }
-    }
-
-    // Atualizar vetor Pos
-    long long offset = 0;
-    for (int j = 0; j < np; j++) {
-        Pos[j] = offset;
-        for (long long i = offset; i < n && Output[i] < P[j]; i++) {
-            offset++;
         }
     }
 }
