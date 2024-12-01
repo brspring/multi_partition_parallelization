@@ -81,6 +81,13 @@ int main (int argc, char *argv[]) {
     long long *P = geraVetor(np, 1);
     long long *Output = geraVetor(n, 0);
     int *Pos = geraVetorPos(np);
+    if(!Output || !Pos){
+        fprintf(stderr, "Falha na alocação de memória\n");
+        free(Input);
+        free(P);
+        return 1;
+    }
+
     struct timespec start, end;
 
 

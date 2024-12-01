@@ -9,6 +9,11 @@
 // Definição de MAX_THREADS
 #define MAX_THREADS 4
 
+typedef struct {
+    long long *buffer;
+    long long count;
+} ThreadBuffer;
+
 // Estrutura para passar os dados das threads
 typedef struct {
     long long *Input;
@@ -19,8 +24,8 @@ typedef struct {
     int *Pos;
     long long start;
     long long end;
-    long long *local_count; // Contador local por thread
-    long long *global_count; // Contador global compartilhado para a posição
+    long long *global_count;  // Contador global compartilhado
+    ThreadBuffer localBuffer; // Buffer local
 } PartitionArgs;
 
 // Definições de mutexes para sincronização
