@@ -3,114 +3,31 @@
 #include <limits.h>
 #include <pthread.h>
 #include <time.h>
+#include "verifica_particoes.h"
+#include "multi_partition.h"
 
-#define MAX_THREADS 4
-
-// int multi_partition(long long *Input, int n, long long *P, int np, long long *Output, int *Pos) {
-//     long long pMin, pMax = 0;
-//     long long count = 0;
-
-//     for(int j=0; j<np; j++) {
-//         Pos[j] = count;
-//         for(int i=0; i<n; i++) {
-//             if(j == 0)
-//                 pMin = 0;
-//             else
-//                 pMin = P[j-1];
-//             pMax = P[j];
-//             if(Input[i] < pMax && Input[i] >= pMin) {
-//                 Output[count] = Input[i];
-//                 count++;
-//             }
-//         }
-//     }
-// }
+#define NTIMES 10
+#define RAND_MAX_CUSTOM 5
 
 long long geraAleatorioLL() {
-    long long a = rand() % 10;  // Returns a pseudo-random integer
-                     //    between 0 and RAND_MAX.
-    long long b = rand() % 10;  // same as above
+    long long a = rand() % RAND_MAX_CUSTOM;
+    long long b = rand() % RAND_MAX_CUSTOM;
     long long v = (long long)a * 100 + b;
     return v;
 }
 
-void printVetor(long long *Output, long long n) {
-    for(long long i=0; i<n; i++) {
+void printVetor(long long *Output, int n) {
+    for(int i=0; i<n; i++) {
         printf("%lld ", Output[i]);
     }
     printf("\n");
 }
 
-typedef struct {
-    long long *Input;
-    long long n;
-    long long *P;
-    long long np;
-    long long *Output;
-    long long *Pos;
-    long long start;
-    long long end;
-} PartitionArgs;
-
-pthread_mutex_t mutexCount = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutexPos = PTHREAD_MUTEX_INITIALIZER;
-long long count = 0;
-
-void *partition_thread(void *args) {
-    PartitionArgs *data = (PartitionArgs *)args;
-
-    for (long long j = data->start; j < data->end; j++) {
-        long long pMin = (j == 0) ? 0 : data->P[j - 1];
-        long long pMax = data->P[j];
-
-        pthread_mutex_lock(&mutexPos);
-        data->Pos[j] = count;
-        pthread_mutex_unlock(&mutexPos);
-
-        for (long long i = 0; i < data->n; i++) {
-            if (data->Input[i] >= pMin && data->Input[i] < pMax) {
-                pthread_mutex_lock(&mutexCount);
-                data->Output[count] = data->Input[i];
-                count++;
-                pthread_mutex_unlock(&mutexCount);
-            }
-        }
+void printVetorPos(int *Pos, int n) {
+    for(int i=0; i<n; i++) {
+        printf("%d ", Pos[i]);
     }
-
-    return NULL;
-}
-
-void multi_partition(long long *Input, long long n, long long *P, long long np, long long *Output, long long *Pos) {
-    pthread_t threads[MAX_THREADS];
-    PartitionArgs threadData[MAX_THREADS];
-
-    long long partitionsPerThread = np / MAX_THREADS;
-    long long remainder = np % MAX_THREADS;
-
-    long long currentPartition = 0;
-
-    for (long long t = 0; t < MAX_THREADS; t++) {
-        long long start = currentPartition;
-        long long end = start + partitionsPerThread + (t < remainder ? 1 : 0);
-
-        threadData[t] = (PartitionArgs){
-            .Input = Input,
-            .n = n,
-            .P = P,
-            .np = np,
-            .Output = Output,
-            .Pos = Pos,
-            .start = start,
-            .end = end,
-        };
-
-        pthread_create(&threads[t], NULL, partition_thread, &threadData[t]);
-        currentPartition = end;
-    }
-
-    for (long long t = 0; t < MAX_THREADS; t++) {
-        pthread_join(threads[t], NULL);
-    }
+    printf("\n");
 }
 
 int compara(const void *a, const void *b) {
@@ -122,7 +39,7 @@ int compara(const void *a, const void *b) {
 }
 
 // Função para gerar o vetor
-long long *geraVetor(long long n, int ordena) {
+long long *geraVetor(int n, int ordena) {
     long long *vetor = malloc(sizeof(long long) * n);
     if (!vetor)
         return NULL;
@@ -133,25 +50,68 @@ long long *geraVetor(long long n, int ordena) {
     
     if (ordena) {
         qsort(vetor, n, sizeof(long long), compara);
+        vetor[n-1] = LLONG_MAX;
     }
     
     return vetor;
 }
 
-int main () {
-    srand(time(NULL));
-    long long n = 8000000;
-    long long np = 1000;
+// Função para gerar o vetor Pos
+int *geraVetorPos(int n) {
+    int *vetor = malloc(sizeof(int) * n);
+    if (!vetor)
+        return NULL;
+    
+    for (int i = 0; i < n; i++) {
+        vetor[i] = geraAleatorioLL(); // Supondo que essa função existe
+    }    
+    return vetor;
+}
+
+int main (int argc, char *argv[]) {
+    // Verifica se os argumentos foram passados corretamente
+    if (argc != 3) {
+        printf("Uso: %s <n> <np>\n", argv[0]);
+        return 1;
+    }
+    int n = atoi(argv[1]);  // Converte o argumento para inteiro
+    int np = atoi(argv[2]);
+
     long long *Input = geraVetor(n, 0);
     long long *P = geraVetor(np, 1);
     long long *Output = geraVetor(n, 0);
-    long long *Pos = geraVetor(np, 0);
-    
-    multi_partition(Input, n, P, np, Output, Pos);
+    int *Pos = geraVetorPos(np);
+    struct timespec start, end;
 
-    // printVetor(Input, n);
-    // printVetor(P, np);
-    // printVetor(Output, n);
-    // printVetor(Pos, np);
+
+    printf("--- Executando o multi_partition ---\n");
+    printf("n = %d\nnp = %d\n", n, np);
+
+    clock_gettime(CLOCK_REALTIME, &start);
+    multi_partition(Input, n, P, np, Output, Pos);
+    clock_gettime(CLOCK_REALTIME, &end);
+
+    // Imprime o tempo de execução
+    double tempo = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+
+    printf("Tempo de execução: %f segundos\n", tempo);
+
+    // Verificação do particionamento
+    printf("--- Verificando partições ---\n");
+    verifica_particoes(Input, n, P, np, Output, Pos);
+    printf("Vetor P = ");
+    printVetor(P, np);
+    printf("Vetor Pos = ");
+    printVetorPos(Pos, np);
+    printf("Vetor Input = ");
+    printVetor(Input, n);
+    printf("Vetor Output = ");
+    printVetor(Output, n);
+
+    // Limpeza da memória alocada
+    free(Input);
+    free(P);
+    free(Output);
+    free(Pos);
     return 0;
 }

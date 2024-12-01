@@ -11,4 +11,10 @@ Funcionalidades
 
 
 ## Todos
-- [ ] C
+- verifica_particoes.c FEITO
+- separar arquivo do multi_partition FEITO
+- input do tamanho no terminal FEITO
+- melhorar o algoritmo de particao
+- paralelizar
+- rodar no cluster
+- testes
