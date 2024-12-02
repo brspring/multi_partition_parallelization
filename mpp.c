@@ -186,14 +186,21 @@ int main (int argc, char *argv[]) {
         return 1;
     }
     nThreads = atoi(argv[1]);
-    int n = 10;
-    int np = 4;
+    int n = 8000000;
+    int np = 1000;
     srand(time(NULL));
+    
+    // Abre arquivo
     FILE *file = fopen("result.csv", "a");
     if (!file) {
         return 1;
     }
-    fprintf(file, "threads;tempo;meps;parte\n");
+    fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    if(fileSize == 0)
+        fprintf(file, "threads;tempo;meps;parte\n");
+    fseek(file, 0, SEEK_SET);
+
     for(int i=0; i<NTIMES; i++) {
         long long *Input = geraVetor(n, 0);
         long long *P = geraVetor(np, 1);

@@ -16,8 +16,8 @@ Funcionalidades
 - input do tamanho no terminal FEITO
 - melhorar o algoritmo de particao FEITO 
 - paralelizar FEITO
-- contabilizar MEPS
-- montar script
+- contabilizar MEPS FEITO
+- montar script 
 - rodar no cluster 
 - testes
 - fazer relatório
