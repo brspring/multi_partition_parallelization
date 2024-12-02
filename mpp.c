@@ -76,49 +76,50 @@ int main (int argc, char *argv[]) {
     }
     int n = atoi(argv[1]);  // Converte o argumento para inteiro
     int np = atoi(argv[2]);
+    srand(time(NULL));
+    for(int i=0; i<NTIMES; i++) {
+        long long *Input = geraVetor(n, 0);
+        long long *P = geraVetor(np, 1);
+        long long *Output = geraVetor(n, 0);
+        int *Pos = geraVetorPos(np);
+        if(!Output || !Pos){
+            fprintf(stderr, "Falha na alocação de memória\n");
+            free(Input);
+            free(P);
+            return 1;
+        }
 
-    long long *Input = geraVetor(n, 0);
-    long long *P = geraVetor(np, 1);
-    long long *Output = geraVetor(n, 0);
-    int *Pos = geraVetorPos(np);
-    if(!Output || !Pos){
-        fprintf(stderr, "Falha na alocação de memória\n");
-        free(Input);
-        free(P);
-        return 1;
+        struct timespec start, end;
+
+
+        printf("--- Executando o multi_partition ---\n");
+        printf("n = %d\nnp = %d\n", n, np);
+
+        clock_gettime(CLOCK_REALTIME, &start);
+        multi_partition(Input, n, P, np, Output, Pos);
+        clock_gettime(CLOCK_REALTIME, &end);
+        // Imprime o tempo de execução
+        double tempo = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+
+        printf("Tempo de execução: %f segundos\n", tempo);
+
+        // Verificação do particionamento
+        printf("--- Verificando partições ---\n");
+        verifica_particoes(Input, n, P, np, Output, Pos);
     }
-
-    struct timespec start, end;
-
-
-    printf("--- Executando o multi_partition ---\n");
-    printf("n = %d\nnp = %d\n", n, np);
-
-    clock_gettime(CLOCK_REALTIME, &start);
-    multi_partition(Input, n, P, np, Output, Pos);
-    clock_gettime(CLOCK_REALTIME, &end);
-
-    // Imprime o tempo de execução
-    double tempo = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0;
-
-    printf("Tempo de execução: %f segundos\n", tempo);
-
-    // Verificação do particionamento
-    printf("--- Verificando partições ---\n");
-    verifica_particoes(Input, n, P, np, Output, Pos);
-    printf("Vetor P = ");
-    printVetor(P, np);
-    printf("Vetor Pos = ");
-    printVetorPos(Pos, np);
-    printf("Vetor Input = ");
-    printVetor(Input, n);
-    printf("Vetor Output = ");
-    printVetor(Output, n);
+    // printf("Vetor P = ");
+    // printVetor(P, np);
+    // printf("Vetor Pos = ");
+    // printVetorPos(Pos, np);
+    // printf("Vetor Input = ");
+    // printVetor(Input, n);
+    // printf("Vetor Output = ");
+    // printVetor(Output, n);
 
     // Limpeza da memória alocada
-    free(Input);
-    free(P);
-    free(Output);
-    free(Pos);
+    // free(Input);
+    // free(P);
+    // free(Output);
+    // free(Pos);
     return 0;
 }
