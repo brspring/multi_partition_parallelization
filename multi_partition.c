@@ -4,8 +4,6 @@
 #include <pthread.h>
 #include "multi_partition.h"
 
-#define MAX_THREADS 4
-
 // Estrutura para os argumentos passados para cada thread
 typedef struct {
     long long *Input;
@@ -106,7 +104,6 @@ void multi_partition(long long *Input, int n, long long *P, int np, long long *O
         for (long long i = 0; i < threadData[minThreadId].local_count; i++) {
             Output[offset++] = threadData[minThreadId].Output_local[i];
             start = (currentPos==0) ? 0 : P[currentPos-1];
-            // printf("start = %lld, end = %lld, output = %lld\n", start, P[currentPos], Output[offset-1]);
 
             while(!(Output[offset-1] >= start && Output[offset-1] < P[currentPos])) {
                 currentPos++;

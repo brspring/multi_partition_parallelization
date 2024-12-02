@@ -14,7 +14,10 @@ Funcionalidades
 - verifica_particoes.c FEITO
 - separar arquivo do multi_partition FEITO
 - input do tamanho no terminal FEITO
-- melhorar o algoritmo de particao
-- paralelizar
-- rodar no cluster
+- melhorar o algoritmo de particao FEITO 
+- paralelizar FEITO
+- contabilizar MEPS
+- montar script
+- rodar no cluster 
 - testes
+- fazer relatório

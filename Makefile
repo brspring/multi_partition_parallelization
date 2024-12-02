@@ -5,8 +5,8 @@ CFLAGS = -Wall -O2 -lpthread
 all: mpp
 
 # Regra para compilar o executável
-mpp: mpp.o verifica_particoes.o multi_partition.o
-	$(CC) $(CFLAGS) -o mpp mpp.o verifica_particoes.o multi_partition.o
+mpp: mpp.o verifica_particoes.o
+	$(CC) $(CFLAGS) -o mpp mpp.o verifica_particoes.o
 
 # Regra para compilar mpp.o
 mpp.o: mpp.c verifica_particoes.h multi_partition.h
