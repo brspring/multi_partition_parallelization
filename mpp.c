@@ -187,7 +187,7 @@ int main (int argc, char *argv[]) {
     }
     nThreads = atoi(argv[1]);
     int n = 8000000;
-    int np = 1000;
+    int np = 10;
     srand(time(NULL));
     
     // Abre arquivo
