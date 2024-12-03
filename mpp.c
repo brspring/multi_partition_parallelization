@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <time.h>
 #include "verifica_particoes.h"
-#define NTIMES 10
+#define NTIMES 1
 #define RAND_MAX_CUSTOM 5
 #define MAX_THREADS 4
 int nThreads;
@@ -187,7 +187,7 @@ int main (int argc, char *argv[]) {
     }
     nThreads = atoi(argv[1]);
     int n = 8000000;
-    int np = 10;
+    int np = 100000;
     srand(time(NULL));
     
     // Abre arquivo
@@ -223,25 +223,11 @@ int main (int argc, char *argv[]) {
         // Imprime o tempo de execução
         double tempo = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0;
 
-        printf("Tempo de execução: %f segundos\n", tempo);
-        fprintf(file, "%d;%f;%f;A\n", nThreads, tempo, n/tempo);
+        printf("total_time_in_seconds: %lf s\n", tempo);
+        // fprintf(file, "%d;%f;%f;A\n", nThreads, tempo, n/tempo);
         // Verificação do particionamento
         printf("--- Verificando partições ---\n");
         verifica_particoes(Input, n, P, np, Output, Pos);
     }
-    // printf("Vetor P = ");
-    // printVetor(P, np);
-    // printf("Vetor Pos = ");
-    // printVetorPos(Pos, np);
-    // printf("Vetor Input = ");
-    // printVetor(Input, n);
-    // printf("Vetor Output = ");
-    // printVetor(Output, n);
-
-    // Limpeza da memória alocada
-    // free(Input);
-    // free(P);
-    // free(Output);
-    // free(Pos);
-    return 0;
+	return 0;
 }
